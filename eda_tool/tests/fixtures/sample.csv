@@ -1,0 +1,21 @@
+id,const_col,bool_col,dt_col,id_like_col,cont_num,disc_num,cat_low,cat_high,free_text,target
+1,42,1,2020-01-01,AAA,1.5,1,A,X,This is a short text,yes
+2,42,0,2020-01-02,BBB,2.5,2,B,Y,Another text entry,no
+3,42,1,2020-02-03,CCC,3.5,3,A,Z,Lorem ipsum dolor sit amet,yes
+4,42,0,2020-03-04,DDD,4.5,4,B,X,Short,yes
+5,42,1,2020-04-05,EEE,5.5,5,C,Y,Some longer free text sample that exceeds thirty characters,no
+6,42,1,2020-05-06,FFF,6.5,6,C,Z,small,no
+7,42,0,2020-06-07,GGG,7.5,7,A,X,free text here,yes
+8,42,1,2020-07-08,HHH,8.5,8,B,Y,another one,no
+9,42,0,2020-08-09,III,9.5,9,C,Z,okay,yes
+10,42,1,2020-09-10,JJJ,10.5,10,A,X,this text is fairly long and descriptive,no
+11,42,0,2020-10-11,KKK,11.5,11,B,Y,additional text sample,yes
+12,42,1,2020-11-12,LLL,12.5,12,C,Z,some more free text content,no
+13,42,0,2020-12-13,MMM,13.5,13,A,X,short phrase,yes
+14,42,1,2021-01-14,NNN,14.5,14,B,Y,yet another entry,no
+15,42,0,2021-02-15,OOO,15.5,15,C,Z,descriptive sentence here,yes
+16,42,1,2021-03-16,PPP,16.5,16,A,X,small text,no
+17,42,0,2021-04-17,QQQ,17.5,17,B,Y,this is a sample,yes
+18,42,1,2021-05-18,RRR,18.5,18,C,Z,more and more text,no
+19,42,0,2021-06-19,SSS,19.5,19,A,X,final text sample,yes
+20,42,1,2021-07-20,TTT,20.5,20,B,Y,the last sample entry,no

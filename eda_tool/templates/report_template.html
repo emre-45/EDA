@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EDA Report{% if target %} — {{ target }}{% endif %}</title>
+<script type="text/javascript">{{ plotlyjs | safe }}</script>
+<style>
+  :root {
+    color-scheme: light;
+    --page-plane:    #f9f9f7;
+    --surface-1:     #fcfcfb;
+    --text-primary:  #0b0b0b;
+    --text-secondary:#52514e;
+    --text-muted:    #898781;
+    --border:        rgba(11,11,11,0.10);
+    --gridline:      #e1e0d9;
+    --row-alt:       #f2f1ee;
+    --accent:        #2a78d6;
+    --good:          #0ca30c;
+    --warning:       #fab219;
+    --serious:       #ec835a;
+    --critical:      #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page-plane:    #0d0d0d;
+      --surface-1:     #1a1a19;
+      --text-primary:  #ffffff;
+      --text-secondary:#c3c2b7;
+      --text-muted:    #898781;
+      --border:        rgba(255,255,255,0.10);
+      --gridline:      #2c2c2a;
+      --row-alt:       #232322;
+      --accent:        #3987e5;
+    }
+  }
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --page-plane:    #0d0d0d;
+    --surface-1:     #1a1a19;
+    --text-primary:  #ffffff;
+    --text-secondary:#c3c2b7;
+    --text-muted:    #898781;
+    --border:        rgba(255,255,255,0.10);
+    --gridline:      #2c2c2a;
+    --row-alt:       #232322;
+    --accent:        #3987e5;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+  }
+  a { color: var(--accent); }
+
+  .app { display: flex; align-items: flex-start; min-height: 100vh; }
+
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--surface-1);
+    border-right: 1px solid var(--border);
+    padding: 20px 14px 40px;
+  }
+  .sidebar .brand {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin: 4px 8px 14px;
+  }
+  .sidebar nav a {
+    display: block;
+    padding: 7px 8px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+  .sidebar nav a:hover { background: var(--row-alt); }
+  .sidebar details { margin: 2px 0; }
+  .sidebar summary {
+    cursor: pointer;
+    padding: 7px 8px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    list-style: none;
+  }
+  .sidebar summary::-webkit-details-marker { display: none; }
+  .sidebar summary:hover { background: var(--row-alt); }
+  .sidebar summary::before { content: "▸ "; color: var(--text-muted); font-size: 11px; }
+  .sidebar details[open] summary::before { content: "▾ "; }
+  .sidebar .toc-sub {
+    padding-left: 22px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .main {
+    flex: 1;
+    min-width: 0;
+    padding: 36px 44px 80px;
+    max-width: 1280px;
+  }
+
+  .theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 20px;
+    z-index: 10;
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text-primary);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+
+  .hero h1 {
+    font-size: 26px;
+    margin: 0 0 10px;
+  }
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .stat-pill {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .stat-pill strong {
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  section.block { margin-top: 44px; }
+  section.block > h2 {
+    font-size: 18px;
+    margin: 0 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--gridline);
+  }
+
+  .flags { display: flex; flex-direction: column; gap: 6px; }
+  .flag {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    font-size: 13.5px;
+  }
+  .badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .badge-critical { color: #fff; background: var(--critical); }
+  .badge-warning  { color: #4a3600; background: var(--warning); }
+  .badge-info     { color: var(--text-secondary); background: var(--row-alt); border: 1px solid var(--border); }
+  .flag .col { font-weight: 600; color: var(--text-primary); }
+  .flag .msg { color: var(--text-secondary); }
+  .empty-note { color: var(--text-muted); font-size: 13.5px; font-style: italic; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px 16px;
+  }
+  .card h3 {
+    margin: 0 0 10px;
+    font-size: 14.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .card h3 .rank { color: var(--text-muted); font-weight: 400; font-size: 12px; }
+  .metric-badge {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+    background: var(--row-alt);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 9px;
+    white-space: nowrap;
+  }
+  .plot-wrap {
+    background: #fcfcfb;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px;
+    overflow: hidden;
+  }
+  .plot-wrap > div { width: 100% !important; }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  table.dataframe {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+  }
+  table.dataframe th, table.dataframe td {
+    padding: 7px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--gridline);
+    white-space: nowrap;
+  }
+  table.dataframe td { font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+  table.dataframe th {
+    position: sticky;
+    top: 0;
+    background: var(--row-alt);
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  table.dataframe tbody tr:nth-child(even) { background: var(--row-alt); }
+
+  @media (max-width: 860px) {
+    .app { flex-direction: column; }
+    .sidebar { position: static; width: auto; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    .main { padding: 28px 18px 60px; }
+  }
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" type="button">Toggle theme</button>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">EDA Report</div>
+    <nav>
+      <a href="#quality">Data Quality</a>
+      <details open>
+        <summary>Univariate</summary>
+        {% for p in profiles %}<a class="toc-sub" href="#col-{{ p.name | slugify }}" title="{{ p.name }}">{{ p.name }}</a>{% endfor %}
+      </details>
+      <a href="#target">Target Deep Dive</a>
+      <details open>
+        <summary>Bivariate</summary>
+        {% for col, metric, value, html in bivariate_html %}<a class="toc-sub" href="#biv-{{ col | slugify }}" title="{{ col }}">{{ col }}</a>{% endfor %}
+      </details>
+      <a href="#correlation">Correlation</a>
+      <a href="#ml-readiness">ML Readiness</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="hero">
+      <h1>Exploratory Data Analysis</h1>
+      <div class="hero-meta">
+        <span class="stat-pill"><strong>{{ "{:,}".format(df.shape[0]) }}</strong> rows</span>
+        <span class="stat-pill"><strong>{{ df.shape[1] }}</strong> columns</span>
+        <span class="stat-pill">Target: <strong>{{ target }}</strong></span>
+        <span class="stat-pill">Problem type: <strong>{{ problem_type }}</strong></span>
+      </div>
+    </header>
+
+    <section class="block" id="quality">
+      <h2>Data Quality Checklist</h2>
+      {% if quality_flags %}
+      <div class="flags">
+        {% for f in quality_flags %}
+        <div class="flag">
+          {% if f.severity == 'critical' %}<span class="badge badge-critical">● critical</span>
+          {% elif f.severity == 'warning' %}<span class="badge badge-warning">▲ warning</span>
+          {% else %}<span class="badge badge-info">○ info</span>
+          {% endif %}
+          <span class="col">{{ f.column }}</span>
+          <span class="msg">— {{ f.message }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty-note">No data quality issues detected.</p>
+      {% endif %}
+    </section>
+
+    <section class="block" id="univariate">
+      <h2>Univariate</h2>
+      <div class="grid">
+        {% for name, html in univariate_html.items() %}
+        <div class="card" id="col-{{ name | slugify }}">
+          <h3>{{ name }}</h3>
+          {% if html is string and 'unavailable' in html.lower() %}
+            <p class="empty-note">{{ html }}</p>
+          {% else %}
+            <div class="plot-wrap">{{ html | safe }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="block" id="target">
+      <h2>Target Deep Dive — {{ target }}</h2>
+      {% if target_deep_dive_html is string and 'unavailable' in target_deep_dive_html.lower() %}
+        <p class="empty-note">{{ target_deep_dive_html }}</p>
+      {% else %}
+        <div class="plot-wrap">{{ target_deep_dive_html | safe }}</div>
+      {% endif %}
+    </section>
+
+    <section class="block" id="bivariate">
+      <h2>Bivariate — ranked by association with {{ target }}</h2>
+      <div class="grid">
+        {% for col, metric, value, html in bivariate_html %}
+        <div class="card" id="biv-{{ col | slugify }}">
+          <h3>
+            <span><span class="rank">#{{ loop.index }}</span> {{ col }}</span>
+            {% if metric %}<span class="metric-badge">{{ metric }}{% if value is not none %} = {{ "%.3f"|format(value) }}{% endif %}</span>{% endif %}
+          </h3>
+          {% if html is string and 'unavailable' in html.lower() %}
+            <p class="empty-note">{{ html }}</p>
+          {% else %}
+            <div class="plot-wrap">{{ html | safe }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="block" id="correlation">
+      <h2>Correlation</h2>
+      {% if correlation_html is string and 'no correlation' in correlation_html.lower() %}
+        <p class="empty-note">{{ correlation_html }}</p>
+      {% else %}
+        <div class="plot-wrap">{{ correlation_html | safe }}</div>
+      {% endif %}
+    </section>
+
+    <section class="block" id="ml-readiness">
+      <h2>ML Readiness</h2>
+      {% if ml_readiness_table %}
+      <div class="table-wrap">{{ ml_readiness_table | safe }}</div>
+      {% else %}
+      <p class="empty-note">No ML readiness data available.</p>
+      {% endif %}
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var key = 'eda-report-theme';
+  var saved = null;
+  try { saved = localStorage.getItem(key); } catch (e) {}
+  if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
+  document.getElementById('theme-toggle').addEventListener('click', function () {
+    var current = root.getAttribute('data-theme');
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var isDark = current ? current === 'dark' : prefersDark;
+    var next = isDark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem(key, next); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

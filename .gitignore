@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+train.csv
+phoen_addiction_eda.html
+eda_tool_production_plan.md
